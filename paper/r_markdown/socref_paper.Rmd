@@ -58,6 +58,9 @@ library(psych)
 library(magrittr)
 library(langcog)
 library(tidyboot)
+library(fs)
+
+project_root <- here::here()
 ```
 
 Early childhood is marked by the rapid acquisition of new concepts, rules, and language, and theories of cognitive development have increasingly focused on the active role that children play in these cognitive achievements [@Xu2013]. Recent work highlights that young children actively explore [@Schulz2007] and ask questions [@Chouinard2007; @Ruggeri2017] in ways that seem specifically targeted to reduce uncertainty. Furthermore, they benefit from the ability to control the timing and content of their learning [@Markant2016]. These activities have been termed “active learning,” to distinguish them from learning contexts in which the learner does not have control over their learning input [@Gureckis2012]. 
@@ -103,7 +106,14 @@ More generally, a complete theory of early metacognition and learning should enc
 
 
 ```{r design,  fig.cap= "Study design for Experiments 1 and 2. Children were shown one or two objects, heard a label, and were asked to place the labeled object in a bucket. Referential ambiguity was manipulated through the familiarity of the objects present and through the availability of referential gaze."}
-img <- png::readPNG("figs/socref_design.png")
+img <- 
+  png::readPNG(fs::path(
+    project_root, 
+    "paper", 
+    "r_markdown", 
+    "figs", 
+    "socref_design.png"
+  ))
 grid::grid.raster(img)
 ```
 
@@ -610,7 +620,7 @@ A third possibility is that this finding is an artifact of our design, in which 
 
 Experiment 2 was designed to achieve several goals. First, we aimed to replicate the finding from Experiment 1 that children reference a social partner on the basis of referential ambiguity while executing a decision. Second, we tested whether children's information gathering is graded with respect to graded evidence about a label's referent.
 
-To this end, we manipulated two sources of referential evidence. We added trials with 1 novel and 1 familiar object (FN) and a novel label. This condition contains evidence about reference since the familiar item can be excluded [@Markman1988], but may not be as conclusive as trials with a familiar target. Thus, we predicted that, in the aggregate, children would show the most looking to the speaker in the NN condition, the least in the FF condition, and an intermediate amount in the FN condition. In addition, we manipulated between participants whether or not the speaker gazed at the objects they referred to, and thus, whether or not their gaze was an informative cue to reference. We predicted that having access to referential gaze as an informative cue would make children less likely to reference the speaker during their decision, but perhaps more likely to reference the speaker during labeling. Critically, this also allowed us to test whether children's information gathering is selective on the basis of referential ambiguity during labeling if the speaker's gaze is informative, addressing an interpretive issue in Experiment 1.
+To this end, we manipulated two sources of referential evidence. We added trials with 1 novel and 1 familiar object (FN) and a novel label. This condition contains evidence about reference since the familiar item can be excluded [@Markman1988], but may not be as conclusive as trials with a familiar target. Thus, we predicted that, in the aggregate, children would show the most looking to the speaker in the NN condition, the least in the FF condition, and an intermediate amount in the FN condition. In addition, we manipulated between participants whether or not the speaker gazed at the one object they referred to in each trial, and thus, whether or not their gaze was an informative cue to reference. We predicted that having access to referential gaze as an informative cue would make children less likely to reference the speaker during their decision, but perhaps more likely to reference the speaker during labeling. Critically, this also allowed us to test whether children's information gathering is selective on the basis of referential ambiguity during labeling if the speaker's gaze is informative, addressing an interpretive issue in Experiment 1.
 
 Since we did not observe any difference between F and N trials in Experiment 1, we eliminated single-object trials. Additionally, we restricted the sample to 3- and 4-year-olds, as we did not observe developmental differences in Experiment 1. Three- and 4-year-olds were chosen because we planned to include age in months as a continuous variable in our regression models, and contiguous age groups are thus preferable. Furthermore, 2-year-olds seemed to have more difficulty completing the task in Experiment 1, as evidenced by their lower accuracy rate and higher rate of placing two objects in the bucket.
 
