@@ -43,7 +43,10 @@ library(lme4)
 library(xtable)
 library(knitr)
 library(markdown)
+library(fs)
 theme_set(theme_bw())
+
+project_root <- here::here() #gets the root directory of the whole project.
 ```
 
 Read in files and consolidate to the same directory. 
@@ -51,38 +54,48 @@ Read in files and consolidate to the same directory.
 Coder 1
 
 ```{r}
-files <- dir("../../data_e1/coder_1/")
+files <- dir_ls(fs::path(project_root, "data_e1", "coder_1")) #get list of paths to files
 e1_c1 <- data.frame()
 
 for (f in files) {
-  jf <- paste("../../data_e1/coder_1/",f,sep="")
-  jd <- read.csv(jf)
-  id <- data.frame(SID = f,
-                   line = jd$phase.ordinal,
-                   phase = as.numeric(jd$phase.1_2_3_4),
-                   phase_onset_c1 = jd$phase.onset,
-                   phase_offset_c1 = jd$phase.offset, 
-                   num_looks_c1 = jd$reference.num_looks,
-                   exclude_c1 = jd$reference.exclude)
+  jd <- read_csv(f)
+  id <- data.frame(
+    SID = f, 
+    line = jd$phase.ordinal, 
+    phase = as.numeric(jd$phase.1_2_3_4), 
+    phase_onset_c1 = jd$phase.onset, 
+    phase_offset_c1 = jd$phase.offset, 
+    num_looks_c1 = jd$reference.num_looks, 
+    exclude_c1 = jd$reference.exclude
+  )
   e1_c1 <- bind_rows(e1_c1, id)
 }
 
-files <- dir("../data_e1/coder_1_ref/")
+#get list of paths to ref files, whatever the hell those are
+files_ref <- dir_ls(fs::path(project_root, "data_e1", "coder_1_ref"))
 
-for (f in files) {
-  jf <- paste("../data_e1/coder_1_ref/",f,sep="")
-  jd <- read.csv(jf)
-  id <- data.frame(SID = f,
-                   line = jd$phase.ordinal + 1,
-                   phase = as.numeric(jd$phase.1_2_3_4),
-                   phase_onset_c1 = jd$phase.onset,
-                   phase_offset_c1 = jd$phase.offset, 
-                   num_looks_c1 = jd$reference.num_looks,
-                   exclude_c1 = jd$reference.exclude)
+for (f in files_ref) {
+  #jf <- paste("data_e1/coder_1_ref/", f ,sep = "")
+  jd <- read.csv(f)
+  id <- data.frame(
+    SID = f, 
+    line = jd$phase.ordinal + 1, 
+    phase = as.numeric(jd$phase.1_2_3_4), 
+    phase_onset_c1 = jd$phase.onset, 
+    phase_offset_c1 = jd$phase.offset, 
+    num_looks_c1 = jd$reference.num_looks, 
+    exclude_c1 = jd$reference.exclude
+  )
   e1_c1 <- bind_rows(e1_c1, id)
 }
 
-e1_c1$SID <- str_replace(e1_c1$SID, ".csv", "")
+e1_c1 <- 
+  e1_c1 %>% 
+  mutate(
+    SID = str_extract(SID, "\\d{5,6}_\\d{2}") #extract the subject ID from the file path
+  )
+
+
 
 ```
 
@@ -95,10 +108,12 @@ e1_c2_ref <- data.frame()
 for (f in files) {
   jf <- paste("../../data_e1/coder_2/",f,sep="")
   jd <- read.csv(jf)
-  id <- data.frame(SID = f,
-                   line = jd$phase.ordinal,
-                   phase = as.numeric(jd$phase.1_2_3_4),
-                   num_looks_c2_ref = jd$reference.num_looks)
+  id <- data.frame(
+    SID = f, 
+    line = jd$phase.ordinal, 
+    phase = as.numeric(jd$phase.1_2_3_4), 
+    num_looks_c2_ref = jd$reference.num_looks
+  )
   e1_c2_ref <- bind_rows(e1_c2_ref, id)
 }
 
@@ -107,12 +122,15 @@ files <- dir("../../data_e1/coder_2_ref/")
 for (f in files) {
   jf <- paste("../../data_e1/coder_2_ref/",f,sep="")
   jd <- read.csv(jf)
-  id <- data.frame(SID = f,
-                   line = jd$phase.ordinal + 1,  #NOTE- have to add 1 here because script output lines 1-48 and manual export was 0-47
-                   phase = as.numeric(jd$phase.1_2_3_4),
-                   num_looks_c2_ref = jd$reference.num_looks)
+  id <- data.frame(
+    SID = f, 
+    line = jd$phase.ordinal + 1, 
+    phase = as.numeric(jd$phase.1_2_3_4), 
+    num_looks_c2_ref = jd$reference.num_looks
+  )
   e1_c2_ref <- bind_rows(e1_c2_ref, id)
 }
+#NOTE- have to add 1 here because script output lines 1-48 and manual export was 0-47
 
 e1_c2_ref$SID <- str_replace(e1_c2_ref$SID, ".csv", "")
 ```
