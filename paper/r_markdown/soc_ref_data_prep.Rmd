@@ -28,7 +28,7 @@ library(magrittr)
 library(fs)
 
 project_root <- here::here()
-demographics_path <- 
+demographics_path <- fs::path(project_root, "paper", "")
 ```
 
 ```{r include=FALSE}

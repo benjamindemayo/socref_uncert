@@ -124,37 +124,71 @@ In Experiment 1, we examined whether children would visually reference a speaker
 We were interested in the amount of information gathering children exhibited across the trial. We considered four different phases of each trial based on the notion that children might expect different social information at different stages of the task. Specifically, we predicted that children might expect the speaker's gaze direction to be informative during the labeling itself, as speakers tend to look at objects they refer to. We also predicted that later in the trial, as children reached for an object and placed it in the bucket, they might expect evaluative feedback about their choice (e.g., facial expressions of encouragement or discouragement).
 
 ```{r}
-load("../processed_data/soc_ref_e2.RData")
-plength2 <- psych::describeBy(d$phase_length, d$phase_name)
+load(path(project_root, "paper", "processed_data", "soc_ref_e2.RData"))
 
-load("../processed_data/soc_ref_e1.RData")
+load(path(project_root, "paper", "processed_data", "soc_ref_e1.RData"))
 
-age_months <- d %>%
+#creates data frame with mean age in months for all four age bins
+age_months <- 
+  d %>%
   group_by(age_years) %>%
-  summarise(mean = mean(age_months))
+  summarise(mean = mean(age_months)) %>% 
+  mutate(
+    age_years = factor( #turn age into a factor here
+      age_years,
+      levels = c(2, 3, 4, 5),
+      labels = c("two", "three", "four", "five")
+    )
+  )
 
-age_months$age_years <- factor(age_months$age_years,
-levels = c(2, 3, 4, 5),
-labels = c("two", "three", "four", "five"))
+# age_months$age_years <- factor(age_months$age_years, levels = c(2, 3, 4, 5), labels = c("two", "three", "four", "five"))
 
-halfs<- d %>%
+#makes an entirely new data frame with a column indicating 
+#if the trial number is 1 through 4
+halfs <- 
+  d %>%
   mutate(first_half = between(trial, 1, 4)) 
 
+#gives a list of summary statistics about each phase but I am confused by this code?
 plength1 <- psych::describeBy(d$phase_length, d$phase_name)
+plength2 <- psych::describeBy(d$phase_length, d$phase_name)
 
+#initialize 2 data frames for the phases
 phases1 <- data.frame()
 phases2 <- data.frame()
-phases1 <- bind_rows(phases1, plength1$label, plength1$slide, plength1$planning, plength1$response)%>%
-  select(mean, sd)%>%
+
+#create data frames with mean and sd for all four phases in both experiments
+phases1 <- 
+  bind_rows(
+    phases1, 
+    plength1$label, 
+    plength1$slide, 
+    plength1$planning, 
+    plength1$response
+  ) %>%
+  select(mean, sd) %>%
   mutate(phase = c("label","slide","planning","response"), Experiment = "1")
-phases2 <- bind_rows(phases2, plength2$label, plength2$slide, plength2$planning, plength2$response)%>%
-  select(mean, sd)%>%
+
+phases2 <- 
+  bind_rows(
+    phases2, 
+    plength2$label, 
+    plength2$slide, 
+    plength2$planning, 
+    plength2$response
+  ) %>%
+  select(mean, sd) %>%
   mutate(phase = c("label","slide","planning","response"), Experiment = "2")
 
-phases <- bind_rows(phases1, phases2)%>%
+#combine both phase data frames
+phases <- 
+  bind_rows(phases1, phases2) %>%
   select(Experiment, phase, mean, sd)
 
-save(phases, file = "../processed_data/phases.RData")
+save(
+  phases, 
+  file = path(project_root, "paper", "processed_data", "phases.RData")
+)
 ```
 
 ## Methods
@@ -176,10 +210,13 @@ Throughout the study, the child sat at one end of a large circular table, and th
 ### Coding procedure and analytic plan
 
 ```{r}
-load("../processed_data/soc_ref_e1.RData")
+
+load(path(project_root, "paper", "processed_data", "soc_ref_e1.RData"))
+
 #how many trials are missing because of child off-task?
-missing <- d %>%
-  group_by(age_years)%>%
+missing <- 
+  d %>%
+  group_by(age_years) %>%
   summarise(excluded = mean(exclude))
 
 missingtwo <- missing$excluded[missing$age_years == 2]
@@ -204,31 +241,44 @@ To quantify the effects of the number and familiarity of objects on children's l
 ###Accuracy
 
 ```{r echo = FALSE}
+#This chunk calculates a bunch of values that Emily uses later in the paper.
+
 #how often did children select two objects or no objects?
-ids <- d %>%
- distinct(SID)
 
-trials <- d %>%
- distinct(trial)
+#data frame of distinct SID's
+ids <- 
+  d %>% 
+  distinct(SID)
 
+#data frame of distinct trials
+trials <- 
+  d %>% 
+  distinct(trial)
+
+#multiply number of trials by number of subjects to get 960
 n <- length(ids$SID)*length(trials$trial)
+
 n_two <- n/2 #number of two-object trials
+
 n_two_group <- n_two/4 #number of two-object trials per age group
 
-res <- d %>%
-  filter(num_objs == 2)%>%
+#only look at 2-object trials
+res <- 
+  d %>%
+  filter(num_objs == 2) %>%
   distinct(SID, trial, response, familiarity, acc, age_years)
 
 #how many kids sometimes picked 2 objects?
-two_objs <- res %>%
+two_objs <- 
+  res %>%
   filter(response == "LR" | response == "RL")
 
 l1 <- length(unique(two_objs$SID[two_objs$age_years == 2]))
-l2<- length(unique(two_objs$SID[two_objs$age_years == 3]))
+l2 <- length(unique(two_objs$SID[two_objs$age_years == 3]))
 l3 <- length(unique(two_objs$SID[two_objs$age_years == 4]))
-l4 <-length(unique(two_objs$SID[two_objs$age_years == 5]))
+l4 <- length(unique(two_objs$SID[two_objs$age_years == 5]))
 
-two_kids <- unique(two_objs$SID)
+two_kids <- unique(two_objs$SID) #number of kids who picked up two items
 
 #how often do kids pick 2 objects on 2-object trials?
 nc <- length(res$acc[res$response == "NC"])/n_two
@@ -259,18 +309,20 @@ tot5 <- 100*(lr5 + rl5 + b5) #percent of 2obj trials with two objects placed in 
 
 #are trials with 2 objects chosen more likely to be novel?
 
-nov_t <- d %>%
-  filter(num_objs == 2)%>%
-  distinct(SID, trial, response, familiarity, acc, age_years)%>%
-  mutate(both = response == "LR" | response == "RL" | response == "B")%>%
-  group_by(SID, age_years, familiarity)%>%
+nov_t <- 
+  d %>%
+  filter(num_objs == 2) %>%
+  distinct(SID, trial, response, familiarity, acc, age_years) %>%
+  mutate(both = response == "LR" | response == "RL" | response == "B") %>%
+  group_by(SID, age_years, familiarity) %>%
   summarise(both = mean(both))
 
-nov <- d %>%
-  filter(num_objs == 2)%>%
-  distinct(SID, trial, response, familiarity, acc, age_years)%>%
-  mutate(both = response == "LR" | response == "RL" | response == "B")%>%
-  group_by(age_years, familiarity)%>%
+nov <- 
+  d %>%
+  filter(num_objs == 2) %>%
+  distinct(SID, trial, response, familiarity, acc, age_years) %>%
+  mutate(both = response == "LR" | response == "RL" | response == "B") %>%
+  group_by(age_years, familiarity) %>%
   summarise(both = mean(both))
 
 t_nov_2 <- t.test(nov_t$both[nov_t$familiarity == "familiar" & nov_t$age_years == 2], nov_t$both[nov_t$familiarity == "novel" & nov_t$age_years == 2], paired = TRUE)
@@ -283,18 +335,23 @@ t_nov_5 <- t.test(nov_t$both[nov_t$familiarity == "familiar" & nov_t$age_years =
 
 #when kids put two objects in bucket, do they put the correct one in first if there is a correct answer?
 
-cor <- d %>%
-  filter(num_objs == 2, !is.na(acc), response != "B")%>%
-  distinct(SID, trial, response, familiarity, acc, age_years)%>%
+#generate data frame for 2-object familiar trials
+cor <- 
+  d %>%
+  filter(num_objs == 2, !is.na(acc), response != "B") %>%
+  distinct(SID, trial, response, familiarity, acc, age_years) %>%
   mutate(both = response == "LR" | response == "RL")
 
-acc_sum <- cor%>%
-  filter(acc == 1)%>%
-  group_by(age_years)%>%
+#get summary stats for accuracy on 2-obj familiar trials
+acc_sum <- 
+  cor %>%
+  filter(acc == 1) %>%
+  group_by(age_years) %>%
   summarize(both = sum(both))
 
-both_sum <- cor%>%
-  group_by(age_years)%>%
+both_sum <- 
+  cor %>%
+  group_by(age_years) %>%
   summarize(both = sum(both))
 ```
 
@@ -302,9 +359,9 @@ both_sum <- cor%>%
 #Get accuracy for plot
 d$acc <- as.numeric(as.character(d$acc))
 
-acctab_e1 <- d%>%
-  filter(!is.na(acc),familiarity == "familiar", exclude == 0, num_objs == 2)%>%
-  group_by(age_years)%>%
+acctab_e1 <- d %>%
+  filter(!is.na(acc),familiarity == "familiar", exclude == 0, num_objs == 2) %>%
+  group_by(age_years) %>%
   tidyboot_mean(column = acc)
 
 acctab_e1$age_years <- as.factor(acctab_e1$age_years)
@@ -423,7 +480,7 @@ lmer_data <- d %>%
   filter(!exclude) %>%
   mutate(num_objs = factor(num_objs), 
          familiarity = factor(familiarity), 
-         age_c = as.numeric(langcog::scale(age_months, scale=FALSE)),
+         age_c = as.numeric(langcog::scale(age_months, scale = FALSE)),
          phase_name = factor(phase_name),
          soc_ref = social_ref)
 ```
