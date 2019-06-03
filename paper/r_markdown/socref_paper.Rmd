@@ -359,8 +359,14 @@ both_sum <-
 #Get accuracy for plot
 d$acc <- as.numeric(as.character(d$acc))
 
-acctab_e1 <- d %>%
-  filter(!is.na(acc),familiarity == "familiar", exclude == 0, num_objs == 2) %>%
+acctab_e1 <- 
+  d %>%
+  filter(
+    !is.na(acc),
+    familiarity == "familiar", 
+    exclude == 0, 
+    num_objs == 2
+  ) %>%
   group_by(age_years) %>%
   tidyboot_mean(column = acc)
 
@@ -369,24 +375,28 @@ acctab_e1$age_years <- as.factor(acctab_e1$age_years)
 
 ```{r acce1, fig.cap='Accuracy for FF trials in Experiment 1. Error bars are 95 percent confidence intervals.'}
 ggplot(acctab_e1, aes(age_years, mean)) +
-  geom_bar(stat="identity", position = "dodge") + 
-  geom_linerange(aes(ymin = ci_lower, ymax = ci_upper), 
-             position = position_dodge(width = .9))  +
+  geom_bar(stat = "identity", position = "dodge") + 
+  geom_linerange(
+    aes(ymin = ci_lower, ymax = ci_upper), 
+    position = position_dodge(width = .9)
+  )  +
   ggthemes::theme_base() + 
   labs(x = "Age in Years", y = "Accuracy")
 ```
 
 ```{r phasetable, echo = FALSE, results="asis"}
-load("../processed_data/phases.RData")
+#load phase data
+load(path(project_root, "paper", "processed_data", "phases.RData"))
 
+#name columns in phases data frame
 names(phases) <- c('Experiment','Phase','Mean Duration', 'SD')
 
 print(xtable(phases,
              label = "tab:phases",
              caption = "Phase Durations (in ms)",
-             digits=c(0,0,0,0,0)),
-      include.rownames=FALSE,
-      sanitize.text.function=function(x){x},
+             digits = c(0,0,0,0,0)),
+      include.rownames = FALSE,
+      sanitize.text.function = function(x){x},
       caption.placement = 'bottom',
       table.placement = "b",
       floating = TRUE,
@@ -396,16 +406,18 @@ print(xtable(phases,
 ```
 
 ```{r}
-load("../processed_data/soc_ref_e1.RData")
+load(path(project_root, "paper", "processed_data", "soc_ref_e1.RData"))
+
 #t-test for 2-yo acc
 d$acc <- as.numeric(d$acc)
 
-acc_t <- d%>%
-  filter(!is.na(acc), exclude == 0)%>%
-  group_by(SID, age_years)%>%
-  dplyr::summarise(acc= mean(acc))
+acc_t <- 
+  d %>%
+  filter(!is.na(acc), exclude == 0) %>%
+  group_by(SID, age_years) %>%
+  dplyr::summarise(acc = mean(acc))
 
-acctest <- t.test(acc_t$acc[acc_t$age_years == 2], mu=.5)
+acctest <- t.test(acc_t$acc[acc_t$age_years == 2], mu = .5)
 ```
 
 We examined children's accuracy for those trials in which a correct response was possible (i.e., FF trials). Children sometimes put two items in the bucket (2-year-olds: `r broman::myround(tot2, 1)`% of 2-object trials; 3-year-olds: `r broman::myround(tot3, 1)`%; 4-year-olds: `r broman::myround(tot4, 1)`%; 5-year-olds: `r broman::myround(tot5, 1)`%), despite instructions to choose only one. The first object children put in the bucket was coded as their response. Children in each age group were equally likely to put two objects in the bucket for familiar and unfamiliar trials (2-year-olds: *t*(`r t_nov_2$parameter`) = `r broman::myround(t_nov_2$statistic, 2)`, *p* =`r broman::myround( t_nov_2$p.value, 2)`; 3-year-olds: *t*(`r t_nov_3$parameter`) = `r broman::myround(t_nov_3$statistic, 2)`, *p* =`r broman::myround( t_nov_3$p.value, 2)`; 4-year-olds: *t*(`r t_nov_4$parameter`) = `r broman::myround(t_nov_4$statistic, 2)`, *p* =`r broman::myround(t_nov_4$p.value, 2)`; 5-year-olds: *t*(`r t_nov_5$parameter`) = `r broman::myround(t_nov_5$statistic, 2)`, *p* =`r broman::myround(t_nov_5$p.value, 2)`), suggesting that they put two objects in the bucket because it was a fun activity and difficult to inhibit, and not because they did not know the referent. Among FF trials in which children placed two items in the bucket, they put the correct item in first about half of the time (8/19 trials total for 2-year-olds; 5/6 for 3-year-olds; 0/2 for 4-year-olds; 2/4 for 5-year-olds). 
@@ -413,76 +425,122 @@ We examined children's accuracy for those trials in which a correct response was
 Children also occasionally declined to choose an item (`r broman::myround(nc*100, 1)`% of trials); these trials are excluded from accuracy analyses. Children's accuracy is displayed in Figure \ref{fig:acce1}. Overall children generally chose the correct item for FF trials, indicating that they understood the task and were motivated to answer correctly. While 3- to 5-year-olds performed close to ceiling (92% - 99%), 2-year-olds were less accurate (76%), but still performed significantly above chance (*t*(19) = `r broman::myround(acctest$statistic, 1)` , *p* < .001).
 
 ```{r}
-rm(list=ls())
-load("../processed_data/soc_ref_e1.RData")
+rm(list = ls()) #clear the environment for some reason?
+
+project_root <- here::here()
+
+load(path(project_root, "paper", "processed_data", "soc_ref_e1.RData"))
 ```
 
 ```{r}
 #get means for plot
-msslooks <- filter(d, exclude == 0 | response != "LR" | response != "RL") %>%
+
+
+#first group by SID, phase, number of objects, and familiarity
+msslooks <- 
+  filter(d, exclude == 0 | response != "LR" | response != "RL") %>%
   group_by(SID, phase_name, num_objs, familiarity, age_years) %>%
   summarise(num_looks = mean(num_looks))
 
-mslooks <- filter(d, exclude == 0 | response != "LR" | response != "RL") %>%
+#then bootstrap to generate confidence intervals
+mslooks <- 
+  filter(d, exclude == 0 | response != "LR" | response != "RL") %>%
   group_by(phase_name, familiarity, num_objs, age_years) %>%
   tidyboot_mean(column = num_looks) 
 
-msslooks_phases <- filter(d, exclude == 0) %>%
+msslooks_phases <- 
+  filter(d, exclude == 0) %>%
   group_by(phase_name) %>%
   summarise(num_looks = mean(num_looks))
 
-msslooks$phase_name <- factor(msslooks$phase_name, levels = c("label","slide", "planning", "response"))
-mslooks$phase_name <- factor(mslooks$phase_name, levels = c("label","slide", "planning", "response"))
+#making some columns into factors instead of character values
+msslooks$phase_name <- 
+  factor(
+    msslooks$phase_name, 
+    levels = c("label","slide", "planning", "response")
+  )
 
-msslooks$num_objs <- factor(msslooks$num_objs,
-levels = c(1,2),
-labels = c("One object", "Two objects"))
+mslooks$phase_name <- 
+  factor(
+    mslooks$phase_name, 
+    levels = c("label","slide", "planning", "response")
+  )
 
-mslooks$num_objs <- factor(mslooks$num_objs,
-levels = c(1,2),
-labels = c("One object", "Two objects"))
+msslooks$num_objs <- 
+  factor(
+    msslooks$num_objs, 
+    levels = c(1,2), 
+    labels = c("One object", "Two objects")
+  )
 
-msslooks$familiarity <- factor(msslooks$familiarity,
-levels = c("familiar", "novel"),
-labels = c("familiar (F)", "novel (N)"))
+mslooks$num_objs <- 
+  factor(
+    mslooks$num_objs,
+    levels = c(1,2), 
+    labels = c("One object", "Two objects")
+  )
 
-mslooks$familiarity <- factor(mslooks$familiarity,
-levels = c("familiar", "novel"),
-labels = c("familiar (F)", "novel (N)"))
+msslooks$familiarity <- 
+  factor(
+    msslooks$familiarity, 
+    levels = c("familiar", "novel"), 
+    labels = c("familiar (F)", "novel (N)")
+  )
 
-msslooks$age_years <- factor(msslooks$age_years,
-levels = c(2, 3, 4, 5),
-labels = c("2 years", "3 years", "4 years", "5 years"))
+mslooks$familiarity <- 
+  factor(
+    mslooks$familiarity, 
+    levels = c("familiar", "novel"),
+    labels = c("familiar (F)", "novel (N)")
+  )
 
-mslooks$age_years <- factor(mslooks$age_years,
-levels = c(2, 3, 4, 5),
-labels = c("2 years", "3 years", "4 years", "5 years"))
+msslooks$age_years <- 
+  factor(
+    msslooks$age_years, 
+    levels = c(2, 3, 4, 5), 
+    labels = c("2 years", "3 years", "4 years", "5 years")
+  )
+
+mslooks$age_years <- 
+  factor(
+    mslooks$age_years, 
+    levels = c(2, 3, 4, 5), 
+    labels = c("2 years", "3 years", "4 years", "5 years")
+  )
 ```
 
 
 ```{r resultse1,fig.width=8, fig.height=6, fig.cap='Results of Experiment 1. Number of looks to the experimenter based on phase, the number and familiarity of objects present, and age. Age in months was entered as a continuous variable in regression models but is presented here as a categorical variable for visual simplicity. Error bars are 95 percent confidence intervals.'}
 
-ggplot(msslooks, aes(x = phase_name, y = num_looks, 
-               col = familiarity, group = familiarity)) + 
+ggplot(
+  msslooks, 
+  aes(x = phase_name, y = num_looks, col = familiarity, group = familiarity)
+) + 
   geom_line(data = mslooks, aes(y = mean)) + 
-  geom_pointrange(data = mslooks, 
-                  aes(y = mean, ymin = ci_lower, ymax = ci_upper), 
-                  position = position_dodge(width =.1)) + 
+  geom_pointrange(
+    data = mslooks, 
+    aes(y = mean, ymin = ci_lower, ymax = ci_upper),
+    position = position_dodge(width = .1)
+  ) + 
   facet_grid(age_years ~ num_objs) +
-  scale_y_continuous(limits=c(0,2), breaks=c(0,1,2)) +
+  scale_y_continuous(limits = c(0,2), breaks = c(0,1,2)) +
   theme(axis.text.x = element_text(angle = 0, hjust = .5, vjust = .5)) + 
   labs(x = "Phase", y = "Number of Looks") +
   ggthemes::theme_base() 
 ```
 
 ```{r include = FALSE}
-lmer_data <- d %>%
+#prepare data frame for the linear mixed effect model
+lmer_data <- 
+  d %>%
   filter(!exclude) %>%
-  mutate(num_objs = factor(num_objs), 
-         familiarity = factor(familiarity), 
-         age_c = as.numeric(langcog::scale(age_months, scale = FALSE)),
-         phase_name = factor(phase_name),
-         soc_ref = social_ref)
+  mutate(
+    num_objs = factor(num_objs), 
+    familiarity = factor(familiarity), 
+    age_c = as.numeric(langcog::scale(age_months, scale = FALSE)), 
+    phase_name = factor(phase_name),
+    soc_ref = social_ref
+  )
 ```
 
 ```{r lmer_e1, results="asis"}
@@ -627,38 +685,46 @@ e1.tab %<>%
 
 names(e1.tab)[7] <- c("")
 
-save(e1.tab, file = "../processed_data/e1tab.RData")
+save(e1.tab, file = path(project_root, "paper", "processed_data", "e1tab.RData"))
 ```
 
 ```{r echo = FALSE}
 #histogram for number of looks by phase. 
-load("../processed_data/soc_ref_e1.RData")
 
-hist_e1 <- d %>%
-   select(phase_name, num_looks)%>%
+load(path(project_root, "paper", "processed_data", "soc_ref_e1.RData"))
+
+hist_e1 <- 
+  d %>% 
+  select(phase_name, num_looks) %>% 
   mutate(Experiment = "Experiment 1")
 
-load("../processed_data/soc_ref_e2.RData")
 
-hist_e2 <- d %>%
-   select(phase_name, num_looks)%>%
+load(path(project_root, "paper", "processed_data", "soc_ref_e2.RData"))
+
+hist_e2 <- 
+  d %>% 
+  select(phase_name, num_looks) %>% 
   mutate(Experiment = "Experiment 2")
 
-hist<- hist_e1%>%
+hist <- 
+  hist_e1 %>%
   bind_rows(hist_e2)
 
-hist$phase_name <- factor(hist$phase_name,
-levels = c("label", "slide", "planning", "response"),
-labels = c("Label", "Slide", "Planning", "Response"))
+hist$phase_name <- 
+  factor(
+    hist$phase_name, 
+    levels = c("label", "slide", "planning", "response"), 
+    labels = c("Label", "Slide", "Planning", "Response")
+  )
 ```
 
 ```{r hist, fig.width=6, fig.cap='Distribution of the number of looks to the speaker in each phase.'}
  ggplot(hist, aes(num_looks, fill = num_looks)) +
   geom_histogram(stat = "count") +
-   facet_grid(Experiment~phase_name) +
+  facet_grid(Experiment~phase_name) +
   ggthemes::theme_base() + 
   labs(x = "Number of looks", y = "Trial count") +
-  scale_fill_discrete(name="Trial type")
+  scale_fill_discrete(name ="Trial type")
 ```
 
 ###Social information gathering and referential ambiguity
@@ -685,30 +751,32 @@ Since we did not observe any difference between F and N trials in Experiment 1, 
 ## Methods
 
 ```{r}
-rm(list=ls())
+rm(list = ls())
 load("../processed_data/soc_ref_e2.RData")
+load(path(project_root, "paper", "processed_data", "soc_ref_e2.RData"))
 ```
 
 ```{r}
 #how many statements of uncertainty and questions?
-utterances <- d %>%
-  group_by(trial_type)%>%
+utterances <- 
+  d %>%
+  group_by(trial_type) %>%
   summarise(sou = mean(num_sou), ques = mean(num_ques))
 
-missing <- d %>%
-  group_by(age_years)%>%
+missing <- 
+  d %>%
+  group_by(age_years) %>%
   summarise(excluded = mean(exclude))
 
-missingthree <- missing$excluded[missing$age_years == 3]
-missingfour <- missing$excluded[missing$age_years == 4]
+missingthree <- missing$excluded[missing$age_years == 3] #didn't she already define these?
+missingfour <- missing$excluded[missing$age_years == 4]  #why is she doing this again?
 
 age_months <- d %>%
   group_by(age_years) %>%
   tidyboot_mean(column = age_months)
 
-age_months$age_years <- factor(age_months$age_years,
-levels = c(3, 4),
-labels = c("three", "four"))
+age_months$age_years <- 
+  factor(age_months$age_years, levels = c(3, 4), labels = c("three", "four"))
 ```
 
 ### Participants
@@ -733,46 +801,54 @@ The mean durations of the phases for Experiment 2 are presented in Table 1. They
 ```{r}
 d$acc <- as.numeric(as.character(d$acc))
 
-acc_mss_e2 <- d%>%
-  filter(!is.na(acc), exclude == 0)%>%
-  group_by(trial_type, Gaze, age_years)%>%
+acc_mss_e2 <- 
+  d %>%
+  filter(!is.na(acc), exclude == 0) %>%
+  group_by(trial_type, Gaze, age_years) %>%
   tidyboot_mean(column = acc)
 
-acc_mss_e2$Gaze <- factor(acc_mss_e2$Gaze,
-levels = c("gaze","no_gaze"),
-labels = c("Gaze", "No gaze"))
+acc_mss_e2$Gaze <- 
+  factor(
+    acc_mss_e2$Gaze, 
+    levels = c("gaze","no_gaze"), 
+    labels = c("Gaze", "No gaze")
+  )
 
-acc_mss_e2$trial_type <- factor(acc_mss_e2$trial_type,
-levels = c("familiar","mutual", "novel"),
-labels = c("FF", "FN", "NN"))
+acc_mss_e2$trial_type <- 
+  factor(
+    acc_mss_e2$trial_type, 
+    levels = c("familiar","mutual", "novel"), 
+    labels = c("FF", "FN", "NN")
+  )
 
 acc_mss_e2$age_years <- as.factor(acc_mss_e2$age_years)
 ```
 
 ```{r acce2, fig.env='figure*',fig.width=6, fig.height=3, fig.cap='Accuracy for trials with a correct answer available (FF and FN, and all gaze trials) in Experiment 2. Error bars are 95 percent confidence intervals.'}
-ggplot(acc_mss_e2, aes(age_years, mean, fill=trial_type)) +
-  geom_bar(stat="identity", position = "dodge") + 
-  geom_linerange(aes(ymin = ci_lower, ymax = ci_upper), 
-             position = position_dodge(width = .9)) + 
+ggplot(acc_mss_e2, aes(age_years, mean, fill = trial_type)) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  geom_linerange(
+    aes(ymin = ci_lower, ymax = ci_upper), 
+    position = position_dodge(width = .9)
+  ) + 
   facet_wrap(~ Gaze)  +
   ggthemes::theme_base() + 
   labs(x = "Age in Years", y = "Accuracy") +
-  scale_fill_discrete(name="Trial type")
+  scale_fill_discrete(name = "Trial type")
 ```
 
 ```{r echo = FALSE}
 #how often did children select two objects or no objects?
-ids <- d %>%
- distinct(SID)
+ids <- d %>% distinct(SID)
 
-trials <- d %>%
- distinct(trial)
+trials <- d %>% distinct(trial)
 
 n <- length(ids$SID)*length(trials$trial)
 n_two <- n #number of two-object trials
 n_two_group <- n_two/2 #number of two-object trials per age group
 
-res <- d %>%
+res <- 
+  d %>% 
   distinct(SID, trial, response, trial_type, acc, age_years)
 
 #how often do kids pick 2 objects on 2-object trials?
@@ -796,18 +872,23 @@ tot4 <- 100*(lr4 + rl4 + b4) #percent of 2obj trials with two objects placed in 
 
 #are trials with 2 objects chosen more likely to be novel?
 
-nov_t <- d %>%
-  distinct(SID, trial, response, trial_type, acc, age_years, Gaze)%>%
-  mutate(both = response == "LR" | response == "RL" | response == "B",
-         unambiguous = trial_type == "mutual" | trial_type == "familiar" | Gaze == "gaze")%>%
-  group_by(SID, age_years, trial_type)%>%
+nov_t <- 
+  d %>%
+  distinct(SID, trial, response, trial_type, acc, age_years, Gaze) %>%
+  mutate(
+    both = response == "LR" | response == "RL" | response == "B", 
+    unambiguous = trial_type == "mutual" | 
+      trial_type == "familiar" | Gaze == "gaze"
+  ) %>%
+  group_by(SID, age_years, trial_type) %>%
   summarise(both = mean(both))
 
-nov <- d %>%
-  distinct(SID, trial, response, trial_type, acc, age_years, Gaze)%>%
+nov <- 
+  d %>%
+  distinct(SID, trial, response, trial_type, acc, age_years, Gaze) %>%
   mutate(both = response == "LR" | response == "RL" | response == "B",
-         unambiguous = trial_type == "mutual" | trial_type == "familiar" | Gaze == "gaze")%>%
-  group_by(age_years, unambiguous)%>%
+         unambiguous = trial_type == "mutual" | trial_type == "familiar" | Gaze == "gaze") %>%
+  group_by(age_years, unambiguous) %>%
   summarise(both = mean(both))
 
 #not enough observations for t-test
@@ -815,19 +896,19 @@ nov <- d %>%
 #when kids put two objects in bucket, do they put the correct one in first if there is a correct answer?
 
 cor <- d %>%
-  filter(!is.na(acc), response != "B")%>%
-  distinct(SID, trial, response, trial_type, acc, age_years)%>%
+  filter(!is.na(acc), response != "B") %>%
+  distinct(SID, trial, response, trial_type, acc, age_years) %>%
   mutate(both = response == "LR" | response == "RL")
 
 cor$acc <- as.numeric(cor$acc)
 
-acc_sum <- cor%>%
-  filter(acc == 1)%>%
-  group_by(age_years)%>%
+acc_sum <- cor %>%
+  filter(acc == 1) %>%
+  group_by(age_years) %>%
   summarize(both = sum(both))
 
-both_sum <- cor%>%
-  group_by(age_years)%>%
+both_sum <- cor %>%
+  group_by(age_years) %>%
   summarize(both = sum(both))
 ```
 
