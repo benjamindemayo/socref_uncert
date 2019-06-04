@@ -433,80 +433,152 @@ load(path(project_root, "paper", "processed_data", "soc_ref_e1.RData"))
 ```
 
 ```{r}
-#get means for plot
+# #get means for plot
+# 
+# 
+# #first group by SID, phase, number of objects, and familiarity
+# msslooks <- 
+#   filter(d, exclude == 0 | response != "LR" | response != "RL") %>%
+#   group_by(SID, phase_name, num_objs, familiarity, age_years) %>%
+#   summarise(num_looks = mean(num_looks))
+# 
+# 
+# #then bootstrap to generate confidence intervals
+# mslooks <- 
+#   filter(d, exclude == 0 | response != "LR" | response != "RL") %>%
+#   group_by(phase_name, familiarity, num_objs, age_years) %>%
+#   tidyboot_mean(column = num_looks) 
+# 
+# # msslooks <- 
+# #   msslooks %>% 
+# #   mutate(phase_name = factor(
+# #     phase_name,
+# #     levels = c("label", "slide", "planning", "resonse")
+# #   ))
+# 
+# #making some columns into factors instead of character values
+# msslooks$phase_name <- 
+#   factor(
+#     msslooks$phase_name, 
+#     levels = c("label","slide", "planning", "response")
+#   )
+# 
+# mslooks$phase_name <- 
+#   factor(
+#     mslooks$phase_name, 
+#     levels = c("label","slide", "planning", "response")
+#   )
+# 
+# msslooks$num_objs <- 
+#   factor(
+#     msslooks$num_objs, 
+#     levels = c(1,2), 
+#     labels = c("One object", "Two objects")
+#   )
+# 
+# mslooks$num_objs <- 
+#   factor(
+#     mslooks$num_objs,
+#     levels = c(1,2), 
+#     labels = c("One object", "Two objects")
+#   )
+# 
+# msslooks$familiarity <- 
+#   factor(
+#     msslooks$familiarity, 
+#     levels = c("familiar", "novel"), 
+#     labels = c("familiar (F)", "novel (N)")
+#   )
+# 
+# mslooks$familiarity <- 
+#   factor(
+#     mslooks$familiarity, 
+#     levels = c("familiar", "novel"),
+#     labels = c("familiar (F)", "novel (N)")
+#   )
+# 
+# msslooks$age_years <- 
+#   factor(
+#     msslooks$age_years, 
+#     levels = c(2, 3, 4, 5), 
+#     labels = c("2 years", "3 years", "4 years", "5 years")
+#   )
+# 
+# mslooks$age_years <- 
+#   factor(
+#     mslooks$age_years, 
+#     levels = c(2, 3, 4, 5), 
+#     labels = c("2 years", "3 years", "4 years", "5 years")
+#   )
+```
 
 
-#first group by SID, phase, number of objects, and familiarity
+```{r}
+#trying the data manipulation in the last chunk in a cleaner way
+
+#this creates a data frame that has subject-level means for each familiarity-num_objs combo.
 msslooks <- 
-  filter(d, exclude == 0 | response != "LR" | response != "RL") %>%
+  d %>% 
+  filter(exclude == 0 | response != "LR" | response != "RL") %>%
   group_by(SID, phase_name, num_objs, familiarity, age_years) %>%
-  summarise(num_looks = mean(num_looks))
+  summarise(num_looks = mean(num_looks)) %>% 
+  ungroup %>% 
+  mutate(
+    phase_name = factor(
+      phase_name, 
+      levels = c("label", "slide", "planning", "response")
+    ),
+    num_objs = factor(
+      num_objs,
+      levels = c(1, 2),
+      labels = c("One object", "Two objects")
+    ),
+    familiarity = factor(
+      familiarity,
+      levels = c("familiar", "novel"),
+      labels = c("familiar (F)", "novel (N)")
+    ),
+    age_years = factor(
+      age_years,
+      levels = c(2, 3, 4, 5),
+      labels = c("2 years", "3 years", "4 years", "5 years")
+    )
+  )
 
-#then bootstrap to generate confidence intervals
+#creates a data frame that provides summary statistics across
+#participants for each familiarity-num_objs combo
 mslooks <- 
   filter(d, exclude == 0 | response != "LR" | response != "RL") %>%
   group_by(phase_name, familiarity, num_objs, age_years) %>%
-  tidyboot_mean(column = num_looks) 
-
-msslooks_phases <- 
+  tidyboot_mean(column = num_looks)  %>% 
+  ungroup() %>% 
+  mutate(
+    phase_name = factor(
+      phase_name, 
+      levels = c("label", "slide", "planning", "response")
+    ),
+    num_objs = factor(
+      num_objs,
+      levels = c(1, 2),
+      labels = c("One object", "Two objects")
+    ),
+    familiarity = factor(
+      familiarity,
+      levels = c("familiar", "novel"),
+      labels = c("familiar (F)", "novel (N)")
+    ),
+    age_years = factor(
+      age_years,
+      levels = c(2, 3, 4, 5),
+      labels = c("2 years", "3 years", "4 years", "5 years")
+    )
+  )
+  
+msslooks_phases_new <- 
   filter(d, exclude == 0) %>%
   group_by(phase_name) %>%
   summarise(num_looks = mean(num_looks))
 
-#making some columns into factors instead of character values
-msslooks$phase_name <- 
-  factor(
-    msslooks$phase_name, 
-    levels = c("label","slide", "planning", "response")
-  )
-
-mslooks$phase_name <- 
-  factor(
-    mslooks$phase_name, 
-    levels = c("label","slide", "planning", "response")
-  )
-
-msslooks$num_objs <- 
-  factor(
-    msslooks$num_objs, 
-    levels = c(1,2), 
-    labels = c("One object", "Two objects")
-  )
-
-mslooks$num_objs <- 
-  factor(
-    mslooks$num_objs,
-    levels = c(1,2), 
-    labels = c("One object", "Two objects")
-  )
-
-msslooks$familiarity <- 
-  factor(
-    msslooks$familiarity, 
-    levels = c("familiar", "novel"), 
-    labels = c("familiar (F)", "novel (N)")
-  )
-
-mslooks$familiarity <- 
-  factor(
-    mslooks$familiarity, 
-    levels = c("familiar", "novel"),
-    labels = c("familiar (F)", "novel (N)")
-  )
-
-msslooks$age_years <- 
-  factor(
-    msslooks$age_years, 
-    levels = c(2, 3, 4, 5), 
-    labels = c("2 years", "3 years", "4 years", "5 years")
-  )
-
-mslooks$age_years <- 
-  factor(
-    mslooks$age_years, 
-    levels = c(2, 3, 4, 5), 
-    labels = c("2 years", "3 years", "4 years", "5 years")
-  )
 ```
 
 
@@ -514,7 +586,12 @@ mslooks$age_years <-
 
 ggplot(
   msslooks, 
-  aes(x = phase_name, y = num_looks, col = familiarity, group = familiarity)
+  aes(
+    x = phase_name, 
+    y = num_looks, 
+    col = familiarity, 
+    group = familiarity
+  )
 ) + 
   geom_line(data = mslooks, aes(y = mean)) + 
   geom_pointrange(
@@ -522,11 +599,12 @@ ggplot(
     aes(y = mean, ymin = ci_lower, ymax = ci_upper),
     position = position_dodge(width = .1)
   ) + 
+  ggthemes::theme_base() +
   facet_grid(age_years ~ num_objs) +
   scale_y_continuous(limits = c(0,2), breaks = c(0,1,2)) +
-  theme(axis.text.x = element_text(angle = 0, hjust = .5, vjust = .5)) + 
-  labs(x = "Phase", y = "Number of Looks") +
-  ggthemes::theme_base() 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(x = "Phase", y = "Number of Looks") 
+
 ```
 
 ```{r include = FALSE}
